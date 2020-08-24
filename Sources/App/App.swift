@@ -12,11 +12,13 @@ class App {
     var clients: WebsocketClients
     var consensus: Consensus
     var logger: Logger
-
+    var eventLoop: EventLoop
+    
     init(eventLoop: EventLoop) {
         
         self.logger = Logger(label: "Application Log")
         self.clients = WebsocketClients(eventLoop: eventLoop)
+        self.eventLoop = eventLoop
         
         let q = Quorum(threshold: 80, validators: [])
         

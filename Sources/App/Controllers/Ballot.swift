@@ -20,11 +20,12 @@ class Ballot: Codable {
     var isBroadcasted: Bool
     var nodeResult: BallotVoteResult?
     var node: Node
+    var application: App
     
 //    self.vote_history = dict()
 //    self.node_result = node_result
     
-    init(name: String, node: Node, state: State, nodeResult: BallotVoteResult?) {
+    init(name: String, node: Node, state: State, nodeResult: BallotVoteResult?, app: App) {
         
         self.node = node
         self.isBroadcasted = false
@@ -34,6 +35,7 @@ class Ballot: Codable {
         self.stateHistory = []
         self.name = name
         self.voted = [:]
+        self.application = app
     }
     
     func isValid(ballotMessage: BallotMessage) -> Bool {
@@ -100,7 +102,7 @@ class Ballot: Codable {
         
         if self.state > state {
             
-            self.parent.logger.debug("Ballot -- \(self.node.name): same message and previous state \(state)")
+            self.application.logger.debug("Ballot -- \(self.node.name): same message and previous state \(state)")
 
             return
         }
@@ -119,7 +121,7 @@ class Ballot: Codable {
         }) {
             
             //# existing vote will be overrided
-            self.parent.logger.debug("Ballot -- \(self.node.name), \(self): already voted? true")
+            self.application.logger.debug("Ballot -- \(self.node.name), \(self): already voted? true")
 
 
         }
@@ -130,7 +132,7 @@ class Ballot: Codable {
 
         self.voted[state.rawValue]![node.id] = result
         
-        self.parent.logger.info("Ballot -- \(self.node.name): \(node ) voted for \(self.message)")
+        self.application.logger.info("Ballot -- \(self.node.name): \(node ) voted for \(self.message)")
         return
 
     }
@@ -163,7 +165,7 @@ class Ballot: Codable {
                     
                 let isPassed = agreedVotesCount >= self.node.quorum.minimumQuorum()
                     
-                self.parent.logger.info("Ballot -- \(self.node.name): threshold checked: threshold=\(self.node.quorum.threshold) minimum_quorum=\(self.node.quorum.minimumQuorum()) agreed=\(agreedVotesCount) is_passed=\(isPassed)")
+                self.application.logger.info("Ballot -- \(self.node.name): threshold checked: threshold=\(self.node.quorum.threshold) minimum_quorum=\(self.node.quorum.minimumQuorum()) agreed=\(agreedVotesCount) is_passed=\(isPassed)")
                     
                 if isPassed {
                         

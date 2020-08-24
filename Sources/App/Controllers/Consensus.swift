@@ -17,7 +17,7 @@ class Consensus {
     var storage: Storage
     var ballot: Ballot
     var node: Node
-    var parent: App
+    var Application: App
     
 //    // MARK: - Init
 
@@ -28,12 +28,12 @@ class Consensus {
         self.quorum = quorum
         self.storage = Storage(node: self.node)
         
-        self.ballot = Ballot(name: name, node: self.node, state: .none, nodeResult: nil)
+        self.ballot = Ballot(name: name, node: self.node, state: .none, nodeResult: nil, app: parent )
         self.ballot.change(state: .initialize)
         
-        self.parent = parent
+        self.Application = parent
         
-        self.parent.logger.debug("Consensus -- initially set state to \(self.node.name), \(self.ballot.state)")
+        self.Application.logger.debug("Consensus -- initially set state to \(self.node.name), \(self.ballot.state)")
     }
     
     func validate(message: Message) -> Bool {
@@ -47,11 +47,11 @@ class Consensus {
     
     func receive(ballotMessage: BallotMessage) {
         
-        self.parent.logger.debug("Consensus -- received ballot message \(self.node.name), \(ballotMessage)")
+        self.Application.logger.debug("Consensus -- received ballot message \(self.node.name), \(ballotMessage)")
 
         if self.storage.doesHave(message: ballotMessage) {
                             
-            self.parent.logger.debug("Consensus -- received ballot message is already stored")
+            self.Application.logger.debug("Consensus -- received ballot message is already stored")
             return
         }
                            
@@ -60,11 +60,11 @@ class Consensus {
     
     func receive(message: Message) {
         
-        self.parent.logger.debug("Consensus -- received message \(self.node.name), \(ballotMessage)")
+        self.Application.logger.debug("Consensus -- received message \(self.node.name), \(message)")
         
         if self.storage.doesHave(message: message) {
             
-            self.parent.logger.debug("Consensus -- received message is already stored")
+            self.Application.logger.debug("Consensus -- received message is already stored")
             return
         }
         
@@ -80,13 +80,13 @@ class Consensus {
                 return nd == node
             }) {
                 
-                self.parent.logger.debug("Consensus -- broadcast is skipping node \(node)")
+                self.Application.logger.debug("Consensus -- broadcast is skipping node \(node)")
                 continue
             }
             
             if let ws = node.socket {
                 
-                self.parent.send(data: ballotMessage, with: ws)
+                self.Application.send(data: ballotMessage, with: ws)
             }
         }
         
@@ -98,7 +98,7 @@ class Consensus {
 
         if self.ballot.state != .initialize {
             
-            self.parent.logger.debug("Consensus -- \(self.node.name): ballot state is not `init`, this message will be in stacked in pending storage, \(message)")
+            self.Application.logger.debug("Consensus -- \(self.node.name): ballot state is not `init`, this message will be in stacked in pending storage, \(message)")
             
             self.storage.addPending(message: message)
             return
@@ -120,8 +120,11 @@ class Consensus {
         self.ballot.vote(for: self.node, with: self.ballot.nodeResult ?? .disagree, and: .initialize)
   
         if let ballotMsg = self.ballot.serializedBallotMessage() {
+            do {
+                
+                self.Application.logger.debug("Consensus -- \(self.node.name): broadcast ballot_message initially, \(try? JSONDecoder().decode(BallotMessage.self, from: ballotMsg))")
+            }
             
-            self.parent.logger.debug("Consensus -- \(self.node.name): broadcast ballot_message initially, \(JSONDecoder().decode(BallotMessage.self, from: ballotMsg))")
             
             self.broadcast(ballotMessage: ballotMsg, skipNodes: [message.node])
         }
@@ -132,7 +135,7 @@ class Consensus {
         
         if ballotMessage.node.quorum != self.quorum {
             
-            self.parent.logger.debug("Consensus -- \(self.node.name): message from outside quorum, \(ballotMessage)")
+            self.Application.logger.debug("Consensus -- \(self.node.name): message from outside quorum, \(ballotMessage)")
 
             return
         }
@@ -144,7 +147,7 @@ class Consensus {
         
         let isBallotEmpty = self.ballot.isEmpty()
         
-        self.parent.logger.debug("Consensus -- \(self.node.name): ballot is empty? \(isBallotEmpty)")
+        self.Application.logger.debug("Consensus -- \(self.node.name): ballot is empty? \(isBallotEmpty)")
 
         if isBallotEmpty { //  ballot is empty, just embrace ballot
             
@@ -153,10 +156,10 @@ class Consensus {
         
         let isBallotMessageValid = self.ballot.isValid(ballotMessage: ballotMessage)
 
-        self.parent.logger.debug("Consensus -- \(self.node.name): ballot_message is valid? \(isBallotMessageValid)")
+        self.Application.logger.debug("Consensus -- \(self.node.name): ballot_message is valid? \(isBallotMessageValid)")
 
         if !isBallotMessageValid {
-            self.parent.logger.debug("Consensus -- \(self.node.name): unexpected ballot_message was received: expected != given\n\(self.ballot.dict)\n\(ballotMessage.dict)")
+            self.Application.logger.debug("Consensus -- \(self.node.name): unexpected ballot_message was received: expected != given\n\(self.ballot.dict)\n\(ballotMessage.dict)")
 
             return
         }
@@ -173,7 +176,7 @@ class Consensus {
             self.ballot.change(state: state)
         }
         
-        self.parent.logger.debug("Consensus -- \(self.node.name): is passed threshold? \(hasPassedThershhold), \(ballotMessage)")
+        self.Application.logger.debug("Consensus -- \(self.node.name): is passed threshold? \(hasPassedThershhold), \(ballotMessage)")
     
         if self.handle(state: self.ballot.state, of: ballotMessage, when: hasPassedThershhold) {
 
@@ -203,7 +206,7 @@ class Consensus {
             self.broadcast(ballotMessage: data)
         }
 
-        self.parent.logger.debug("Consensus -- \(self.node.name): new ballot broadcasted \(self.ballot)")
+        self.Application.logger.debug("Consensus -- \(self.node.name): new ballot broadcasted \(self.ballot)")
     }
     
     @discardableResult func handle(state: State, of ballotMessage: BallotMessage, when hasPassedThreshhold: Bool) -> Bool {
@@ -223,7 +226,7 @@ class Consensus {
                         
                         self.broadcast(ballotMessage: data)
                         
-                        self.parent.logger.debug("Consensus -- \(self.node.name): new ballot broadcasted \(self.ballot)")
+                        self.Application.logger.debug("Consensus -- \(self.node.name): new ballot broadcasted \(self.ballot)")
                         // log
                     }
                 }
@@ -235,7 +238,7 @@ class Consensus {
             
             case .allConfirm:
             
-                self.parent.logger.debug("Consensus -- \(self.node.name), \(self.ballot.state), \(ballotMessage)")
+                self.Application.logger.debug("Consensus -- \(self.node.name), \(self.ballot.state), \(ballotMessage)")
                 let result = self.storage.add(ballot: self.ballot)
             
                 if result {
