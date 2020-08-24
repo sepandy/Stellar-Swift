@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Quorum {
+class Quorum: Codable {
     
     // MARK: - Properties
     

@@ -12,7 +12,7 @@ open class WebsocketClients {
     var storage: [UUID: WebSocketClient]
     
     var active: [WebSocketClient] {
-        self.storage.values.filter { !$0.socket.isClosed }
+        self.storage.values.filter { !($0.socket?.isClosed ?? false) }
     }
 
     init(eventLoop: EventLoop, clients: [UUID: WebSocketClient] = [:]) {
@@ -33,7 +33,17 @@ open class WebsocketClients {
     }
 
     deinit {
-        let futures = self.storage.values.map { $0.socket.close() }
-        try! self.eventLoop.flatten(futures).wait()
+        let futures = self.storage.values.map { $0.socket?.close() }
+        var fs = [EventLoopFuture<Void>]()
+        
+        for f in futures {
+            
+            if let future = f {
+                
+                fs.append(future)
+            }
+        }
+        
+        try! self.eventLoop.flatten(fs).wait()
     }
 }

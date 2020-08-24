@@ -46,8 +46,7 @@ class Storage {
                     self.ballotHistory[blmsg.messageID] = dict
                 }
                             
-                //            log.storage.info('%s: ballot was added: %s', self.node.name, ballot)
-
+                self.parent.logger.info("Storage -- \(self.node.name): \(node ) ballot was added \(ballot)")
                 return true
             }
         }
@@ -65,7 +64,7 @@ class Storage {
         self.pending.append(message)
         self.pendingIDs.append(message.messageID)
 
-//        log.storage.info('%s: message was added to pending: %s', self.node.name, message)
+        self.parent.logger.info("Storage -- \(self.node.name): message was added to pending: \(message)")
     }
 
     func isPending(message: Message) -> Bool {

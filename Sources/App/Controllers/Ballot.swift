@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Ballot {
+class Ballot: Codable {
     
     // MARK: - Properties
     
@@ -16,7 +16,7 @@ class Ballot {
     var stateHistory: [State]
     var name: String
     var message: Message?
-    var voted: [Int: [String: BallotVoteResult]]
+    var voted: [Int: [UUID: BallotVoteResult]]
     var isBroadcasted: Bool
     var nodeResult: BallotVoteResult?
     var node: Node
@@ -91,7 +91,7 @@ class Ballot {
             
             return val.contains { (key, _) -> Bool in
                 
-                return key == node.name
+                return key == node.id
             }
         }
     }
@@ -100,11 +100,8 @@ class Ballot {
         
         if self.state > state {
             
-//            log.ballot.debug(
-//                           '%s: same message and previous state: %s: %s',
-//                           self.node.name,
-//                           state,
-//                       )
+            self.parent.logger.debug("Ballot -- \(self.node.name): same message and previous state \(state)")
+
             return
         }
         
@@ -113,16 +110,17 @@ class Ballot {
             return key == state.rawValue
         }) {
             
-            self.voted[state.rawValue] = [String: BallotVoteResult]()
+            self.voted[state.rawValue] = [UUID: BallotVoteResult]()
         }
         
         if self.voted[state.rawValue]!.contains(where: { (key, _) -> Bool in
             
-            return key == node.name
+            return key == node.id
         }) {
             
             //# existing vote will be overrided
-            //log.ballot.debug('%s: already voted?: %s', self.node.name)
+            self.parent.logger.debug("Ballot -- \(self.node.name), \(self): already voted? true")
+
 
         }
 
@@ -130,9 +128,9 @@ class Ballot {
 //             raise Ballot.AlreadyVotedError('node, %s already voted' % node_name)
 //             return
 
-        self.voted[state.rawValue]![node.name] = result
-//        log.ballot.info('%s: %s voted for %s', self.node.name, node, self.message)
-
+        self.voted[state.rawValue]![node.id] = result
+        
+        self.parent.logger.info("Ballot -- \(self.node.name): \(node ) voted for \(self.message)")
         return
 
     }
@@ -165,15 +163,7 @@ class Ballot {
                     
                 let isPassed = agreedVotesCount >= self.node.quorum.minimumQuorum()
                     
-//                    log.ballot.info(
-//                    '%s: threshold checked: threshold=%s voted=%s minimum_quorum=%s agreed=%d is_passed=%s',
-//                    self.node.name,
-//                    self.node.quorum.threshold,
-//                    sorted(map(lambda x: (x[0], x[1].value), target.items())),
-//                    self.node.quorum.minimum_quorum,
-//                    len(agreed_votes),
-//                    is_passed,
-//                    )
+                self.parent.logger.info("Ballot -- \(self.node.name): threshold checked: threshold=\(self.node.quorum.threshold) minimum_quorum=\(self.node.quorum.minimumQuorum()) agreed=\(agreedVotesCount) is_passed=\(isPassed)")
                     
                 if isPassed {
                         

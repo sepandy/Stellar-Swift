@@ -14,16 +14,16 @@ class Message: Codable {
     var messageID: Int
     var hashID: String
     var data: String
-    var nodeID: UUID
+    var node: Node
     
-    init?(messageID: Int, data: String, nodeID: UUID) {
+    init?(messageID: Int, data: String, node: Node) {
         
         if let hid = Message.hash(data) {
             
             self.hashID = hid
             self.messageID = messageID
             self.data = data
-            self.nodeID = nodeID
+            self.node = node
         } else {
             
             return nil
