@@ -10,7 +10,12 @@ import Vapor
 class App {
     
     var clients: WebsocketClients
-    var consensus: Consensus
+    
+    private var _consensus: Consensus!
+    var consensus: Consensus {
+        return _consensus
+    }
+
     var logger: Logger
     var eventLoop: EventLoop
     
@@ -25,7 +30,9 @@ class App {
         
         // for now every time that app runs builds resets
         // in new version have to implement loading from backup/storgae feature
-        self.consensus = Consensus(name: "Test-1", node: Node(name: "Node-1", endpoint: URL(string: "sock://node-1")!, quorum: q, id: UUID(String("1")) ?? UUID(), socket: nil), quorum: q, parent: self)
+        let n = Node(name: "Node-1", endpoint: URL(string: "sock://node-1")!, quorum: q, id: UUID(String("1")) ?? UUID(), socket: nil)
+        
+        self._consensus = Consensus(name: "Test-1", node: n, quorum: q, parent: self)
     
     }
     
@@ -54,10 +61,10 @@ class App {
             if let msg = buffer.decodeWebsocketMessage(Message.self) {
                 
                 
-                
+                self.consensus.receive(message: msg)
             } else if let blmsg = buffer.decodeWebsocketMessage(BallotMessage.self) {
                 
-                
+                self.consensus.receive(ballotMessage: blmsg)
             } else {
                 
                 

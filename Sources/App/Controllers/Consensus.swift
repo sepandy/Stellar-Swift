@@ -26,7 +26,7 @@ class Consensus {
         self.name = name
         self.node = node
         self.quorum = quorum
-        self.storage = Storage(node: self.node)
+        self.storage = Storage(node: self.node, app: parent)
         
         self.ballot = Ballot(name: name, node: self.node, state: .none, nodeResult: nil, app: parent )
         self.ballot.change(state: .initialize)

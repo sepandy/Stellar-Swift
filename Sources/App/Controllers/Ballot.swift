@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Ballot: Codable {
+class Ballot: Encodable {
     
     // MARK: - Properties
     
@@ -36,6 +36,43 @@ class Ballot: Codable {
         self.name = name
         self.voted = [:]
         self.application = app
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case state
+        case stateHistory
+        case name
+        case message
+        case voted
+        case isBroadcasted
+        case nodeResult
+        case node
+    }
+//    
+//    required init(from decoder:Decoder) throws {
+//        let values = try decoder.container(keyedBy: CodingKeys.self)
+//        
+//        self.state = try values.decode(State.self, forKey: .state)
+//        self.stateHistory = try values.decode([State].self, forKey: .stateHistory)
+//        self.name = try values.decode(String.self, forKey: .name)
+//        self.voted = try values.decode([Int: [UUID: BallotVoteResult]].self, forKey: .voted)
+//        self.isBroadcasted = try values.decode(Bool.self, forKey: .isBroadcasted)
+//        self.nodeResult = try values.decode(BallotVoteResult.self, forKey: .nodeResult)
+//        self.node = try values.decode(Node.self, forKey: .node)
+//        
+//        
+//    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.unkeyedContainer()
+        try container.encode(state)
+        try container.encode(stateHistory)
+        try container.encode(name)
+        try container.encode(message)
+        try container.encode(voted)
+        try container.encode(isBroadcasted)
+        try container.encode(nodeResult)
+        try container.encode(node)
     }
     
     func isValid(ballotMessage: BallotMessage) -> Bool {

@@ -8,11 +8,11 @@ public func configure(_ app: Application) throws {
     let application = App(eventLoop: app.eventLoopGroup.next())
     // register routes
     
-    app.webSocket("channel") { req, ws in
+    app.webSocket("connect") { req, ws in
         application.connect(ws)
     }
-
-    app.webSocket(<#T##path: PathComponent...##PathComponent#>, onUpgrade: <#T##(Request, WebSocket) -> ()#>)
-    
+//
+//    app.webSocket(<#T##path: PathComponent...##PathComponent#>, onUpgrade: <#T##(Request, WebSocket) -> ()#>)
+//
 //    try routes(app)
 }
